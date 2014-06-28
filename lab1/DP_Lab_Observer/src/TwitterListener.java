@@ -1,7 +1,5 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -17,7 +15,6 @@ public class TwitterListener implements StatusListener, Subject {
   
   /***** Start ***/
   private Set<String> trackSet = new HashSet<String>();
-  private List<String> matchedDataForTest = new ArrayList<String>();
   /***** End *****/
 
   @Override 
@@ -73,11 +70,6 @@ public class TwitterListener implements StatusListener, Subject {
 		  
 	      System.out.println("notifyObservers: Entry Key/Value is: {" + entry.getKey() + "/" + entry.getValue() + "}");
 	      
-	      //TODO: Check the Set<String> entry of the Observer Map to find out what Stream each Observer had registered to.
-	      //If the registered string is found then update them else ignore that particular tweet for that observer while continuing to process
-	      //the same tweet for other observers
-	      
-	      
 	      //For each observer, get the reference to the observer object
 		  if(entry.getKey()  != null){
 
@@ -127,7 +119,7 @@ public class TwitterListener implements StatusListener, Subject {
     if(mapObservers.get(observer) != null){
     	System.out.println("removeObserver: Observer that has to be removed has been found");
     	mapObservers.remove(observer);
-    	//Setting the resul to True to indicate that the record to be removed was removed successfully
+    	//Setting the result to True to indicate that the record to be removed was removed successfully
     	result = true;
     }
     /************ End ************/
