@@ -1,0 +1,925 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+  <head>
+    <title>Social Image Example</title>
+  </head>
+  <body onload=createDivForEachImage()>
+    <script type="text/javascript">
+      var maxWidth = 1024;
+      var maxHeight = 768;
+      var divs=new Array();
+      var basicDrawer = new BasicDrawer();
+      var advancedDrawer = new AdvancedDrawer();
+      var personalDrawer = new PersonalDrawer();
+      var drawer = basicDrawer;
+      
+      function sortImgByID(a, b) {
+        if (a.id < b.id) {
+          return -1; 
+        } 
+        if (a.id > b.id) {
+          return 1; 
+        }
+        return 0;
+      }
+      function sortImgBySize(a, b) {
+        var imgs = a.getElementsByTagName("img");
+        var heightA = imgs[0].height;
+        var widthA = imgs[0].width;
+
+        imgs = b.getElementsByTagName("img");
+        var heightB = imgs[0].height;
+        var widthB = imgs[0].width;
+
+        return heightB * widthB - heightA * widthA;
+      }
+
+      function increaseCount(id, event) {
+        element = document.getElementById(id);
+        redraw(id, event.which);
+      }
+	
+	  /***** Basic Drawer - START *******/
+      function BasicDrawer() {};
+      BasicDrawer.prototype.resizeImages = function(id, which) {
+
+        for (var i = 0; i < divs.length; i++) {
+          var imgs = divs[i].getElementsByTagName("img");
+          var height = imgs[0].height;
+          var width = imgs[0].width;
+
+          if (divs[i].id == id) {
+            if (which == 1) {
+              imgs[0].setAttribute("width", width * 1.1);
+              imgs[0].setAttribute("height", height * 1.1);
+            } else {
+              imgs[0].setAttribute("width", width * 0.9);
+              imgs[0].setAttribute("height", height * 0.9);
+            }
+          }
+        }
+      }
+
+      BasicDrawer.prototype.placeImages = function() {
+        divs.sort(sortImgByID);
+
+        var isTooBigImgs = true;
+        while(isTooBigImgs) {
+          var topPos = 100;
+          var leftPos = 0;
+          isTooBigImgs = false;
+          var rowHeight = 0;
+          for (var i = 0; i < divs.length; i++) {
+            var imgs = divs[i].getElementsByTagName("img");
+            var height = imgs[0].height;
+            var width = imgs[0].width;
+            if (width > maxWidth) {
+              isTooBigImgs = true;
+              break;
+            }
+            if (leftPos + width > maxWidth) {
+              topPos += rowHeight;
+              leftPos = 0;
+              rowHeight = 0;
+            } 
+            if ((topPos + height - 100) > maxHeight) {
+              isTooBigImgs = true;
+              break;
+            }
+            divs[i].style.top = Math.round(topPos) + "px";
+            divs[i].style.left = Math.round(leftPos) + "px";
+            leftPos += width;
+            if (height > rowHeight) {
+              rowHeight = height; 
+            }
+          }
+
+          if (isTooBigImgs) {
+            for (var i = 0; i < divs.length; i++) {
+              var imgs = divs[i].getElementsByTagName("img");
+              var height = imgs[0].height;
+              var width = imgs[0].width;
+              imgs[0].setAttribute("width", width * 0.95);
+              imgs[0].setAttribute("height", height * 0.95);
+            }
+          }
+        }
+      }
+      /***** Basic Drawer - END ******/
+      
+      /***** Advanced Drawer - START ****/
+      function AdvancedDrawer() {
+      }
+      
+      AdvancedDrawer.prototype.resizeImages = function(id, which) {
+      	
+      	/**** START *****/
+      	console.log("Inside the Resize Images method of Advanced Drawer");
+		
+        var areaOfClickedImg = 0;
+        var areaOfOtherImg = 0;
+        var totalAreaOfOtherImgs = 0;
+        
+        for (var i = 0; i < divs.length; i++) {
+        
+          var imgs = divs[i].getElementsByTagName("img");
+          var height = imgs[0].height;
+          var width = imgs[0].width;
+		  
+		  console.log("Processing Resize for Img Number: " + i);
+		  
+	      if (divs[i].id == id) {
+          	if (which == 1) { //Indicates a RIGHT Click
+             
+				//Calculate the Area of the Clicked Image
+				imgs[0].setAttribute("width", width * 1.1);
+				imgs[0].setAttribute("height", height * 1.1);
+  
+				//Calculate the Area of the Image that was clicked
+				areaOfClickedImg = height * width;
+              
+            } else {  //Indicates a LEFT Click
+            
+              imgs[0].setAttribute("width", width * 0.9);
+              imgs[0].setAttribute("height", height * 0.9);
+            }
+            
+          }else{
+			
+			console.log("Inside the ELSE condition for RESIZE Img");
+			
+			areaOfOtherImg = height * width;
+			console.log("areaOfOtherImg:" + areaOfOtherImg);
+			totalAreaOfOtherImgs = totalAreaOfOtherImgs + areaOfOtherImg;
+          }
+          
+        } //End of Initial For Loop
+        
+        var shrinkageValue = 1; //Default value
+        
+        //Verify what needs to be done with the img
+    	var newTotalAreaOfOtherImgs = totalAreaOfOtherImgs - (0.1)*(areaOfClickedImg);
+    	console.log("The NEWLY created area is:" + newTotalAreaOfOtherImgs);
+    	
+    	if(newTotalAreaOfOtherImgs < 0){
+    	  console.log("No need to reduce the size of the other images");
+    	}else{
+    	  shrinkageValue = Math.sqrt(newTotalAreaOfOtherImgs/totalAreaOfOtherImgs);   	  
+    	  console.log("Reduce the size of the Area of each other Imgs by a the Shrinkage Value: " + shrinkageValue);
+    	}
+    	
+    	//Rerun the Loop to apply the Resize
+        for (var i = 0; i < divs.length; i++) {
+        
+          var imgs = divs[i].getElementsByTagName("img");
+          var height = imgs[0].height;
+          var width = imgs[0].width;
+		  
+		  console.log("Processing Resize for Img Number: " + i);
+		  
+	      if (divs[i].id == id) {
+          }else{
+            console.log("Shrinking by the value: " + shrinkageValue);
+            imgs[0].setAttribute("width", width * shrinkageValue);
+            imgs[0].setAttribute("height", height * shrinkageValue);
+          }
+        } //End of For Loop
+    	
+        console.log("Area of Clicked Img: " + areaOfClickedImg);
+        console.log("Sum of Area of Other Imgs: " + totalAreaOfOtherImgs);
+ 
+      	/**** END ******/
+      }
+
+      AdvancedDrawer.prototype.placeImages = function() {
+      	/*** START ****/
+      	console.log("Inside the Place Images method of Advanced Drawer");
+      	divs.sort(sortImgBySize); // Sort the images by Size
+        
+        var isTooBigImgs = true;
+  		var nextLeftPos = 0;
+   		var nextTopPos = 0;
+        
+        while(isTooBigImgs){
+           
+            isTooBigImgs = false;
+ 	
+ 			//Center of the Grid   		
+    		var centerX = maxWidth/2;
+    		var centerY = 100 + maxHeight/2;
+
+	        var height = 0;
+    	    var width = 0;
+		
+			//Image 1 
+    	    //Process first and largest img only
+        	for (var i=0; i<1; i++){
+				var imgs = divs[i].getElementsByTagName("img");
+  
+				//Check the Height and the Width of the Image being processed
+				height = imgs[0].height;
+            	width = imgs[0].width;
+			}
+        	
+        	console.log("Image: Height -: " + height + " Width -: " + width);
+        	
+			//Split the Image 1 to find its Center Point
+        	var imgSplitHeight = height/2;
+        	var imgSplitWidth = width/2;
+            
+			console.log("Split size: Height: " + imgSplitHeight + " Width: " + imgSplitWidth);
+            
+			//Get the Coordinates around the Picture
+			//Image 1
+			var x1 = centerX - imgSplitWidth;
+			var y1 = centerY - imgSplitHeight;
+			
+			//Image 2 Coordinates
+			var x2 = centerX + imgSplitWidth; 
+			var y2 = centerY;
+			
+			//Image 3 Coordinates
+			var x3 = centerX + imgSplitWidth;
+			var y3 = centerY + imgSplitHeight; 
+
+			//Image 4 Coordinates			
+			var x4 = centerX;
+			var y4 = centerY + imgSplitHeight;
+			
+			//Image 5 Coordinates
+			var x5 = centerX - imgSplitWidth;
+			var y5 = centerY + imgSplitHeight;
+
+			//Image 6 Coordinates
+			var x6 = centerX - imgSplitWidth;
+			var y6 = centerY;
+	
+			//Image 7 Coordinates						
+			var x7 = centerX - imgSplitWidth;
+			var y7 = centerY - imgSplitHeight;
+
+			//Image 8 Coordinates			
+			var x8 = centerX;
+			var y8 = centerY - imgSplitHeight;
+
+			//Image 9 Coordinates
+			var x9 = centerX + imgSplitWidth;
+			var y9 = centerY - imgSplitHeight;
+			
+			var x10, y10 = 0;
+			var x11, y11 = 0;
+			var x12, y12 = 0;
+			var x13, y13 = 0;
+			var x14, y14 = 0;
+			var x15, y15 = 0;
+			var x16, y16 = 0;
+			var x17, y17 = 0;
+			var x18, y18 = 0;
+        	
+        	var widthCalculator = 0;
+        	
+			//Iterate through all the Divs to place the images
+ 			for (var i = 0; i < divs.length; i++) {
+            
+ 	           var imgs = divs[i].getElementsByTagName("img");
+ 	 	
+ 	 			//Adding validations for Image size
+				var width = imgs[0].width;
+				if (width > maxWidth) {
+					console.log("Width is greater than the Maximum Width");
+					isTooBigImgs = true;
+					break;
+				}
+				
+				var height = imgs[0].height;
+				if (height > maxHeight) {
+					console.log("Height is greater than the Maximum Height");
+					isTooBigImgs = true;
+					break;
+				}
+				
+	            //Check the Height and the Width of the Image being processed
+	 	   		console.log("Processing Image number: " + i);
+	    		//Image 1
+				if(i==0){ 
+					var img1width = imgs[0].width;
+					var isInvalidWidth = validateWidth(img1width,x1);
+					if(isInvalidWidth){
+						console.log("Img 1 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+					
+					var img1height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img1height,y1);
+					if(isInvalidHeight){
+						console.log("Img 1 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+
+    				divs[i].style.top = Math.round(y1) + "px";
+		            divs[i].style.left = Math.round(x1) + "px";
+ 					console.log("Placing image 0 at position X: " + x1 + "Y: " + y1);
+	 			}
+ 			
+	 			//Image 2
+	   			if(i==1){
+	   				
+	   				var img2width = imgs[0].width;
+	   				var isInvalidWidth = validateWidth(img2width,x2);
+					if(isInvalidWidth){
+						console.log("Img 2 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	   			    var img2height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img2height,y2);
+					if(isInvalidHeight){
+						console.log("Img 2 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+
+   				    var newY2 = y2 - img2height/2;
+ 
+    				divs[i].style.top = Math.round(newY2) + "px";
+	        	    divs[i].style.left = Math.round(x2) + "px";
+	        	    
+	        	    //Calculate Positions for Images 10 and 11
+		            x10 = x2 + width;
+		            y10 = newY2;
+		            
+		            x11 = x2 + width;
+		            y11 = newY2;
+	        	    
+ 				}
+
+				//Image 3			
+ 	  			if(i==2){
+ 	  			
+ 	  				var img3width = imgs[0].width;
+ 	  				var isInvalidWidth = validateWidth(img3width,x3);
+					if(isInvalidWidth){
+						console.log("Img 3 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	   			    var img3height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img3height,y3);
+					if(isInvalidHeight){
+						console.log("Img 3 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+ 	  			
+  	 				divs[i].style.top = Math.round(y3) + "px";
+		            divs[i].style.left = Math.round(x3) + "px";
+		            
+		            //Calculate Coordinates for Images 12,13,14
+		            x12 = x3 + width;
+		            y12 = y3;
+		            
+		            x13 = x3 + width;
+		            y13 = y3 + height;
+		            
+		            x14 = x3;
+		            y14 = y3 + height;
+	 			}
+		
+				//Image 4
+ 	  			if(i==3){ 
+
+ 		           	var img4width = imgs[0].width;
+ 		           	var isInvalidWidth = validateWidth(img4width,x4);
+					if(isInvalidWidth){
+						console.log("Img 4 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	   			    var img4height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img4height,y4);
+					if(isInvalidHeight){
+						console.log("Img 4 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+ 		           	
+ 					var newX4 = x4 - img4width/2;
+					divs[i].style.top = Math.round(y4) + "px";
+					divs[i].style.left = Math.round(newX4) + "px";
+					
+					//Calculate Coordinates for Image 15
+					x15 = newX4;
+					y15 = y4 + img4height;
+ 				}
+			
+				//Image 5
+   				if(i==4){
+ 
+   	 	         	var img5width = imgs[0].width;
+  	 	         	var isInvalidWidth = validateWidth(img5width,x5);
+					if(isInvalidWidth){
+						console.log("Img 5 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+ 
+		  	        var img5height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img5height,y5);
+					if(isInvalidHeight){
+						console.log("Img 5 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+ 
+ 					var newX5 = x5 - img5width;
+ 		   			divs[i].style.top = Math.round(y5) + "px";
+		            divs[i].style.left = Math.round(newX5) + "px";
+		            
+		            //Calculate coordinates for Images 16,17,18
+		            x16 = newX5;
+		            y16 = y5 + img5height;
+		            
+		            x17 = newX5 - img5width;
+		            y17 = y5 + img5height;
+		            
+		            x18 = newX5 - img5width;
+		            y18 = y5;
+ 				}
+		
+				//Image 6
+  	 			if(i==5){
+
+  		          	var img6width = imgs[0].width;
+  	 	         	var isInvalidWidth = validateWidth(img6width,x6);
+					if(isInvalidWidth){
+						console.log("Img 6 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+  		  	        var img6height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img6height,y6);
+					if(isInvalidHeight){
+						console.log("Img 6 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  				var newX6 = x6 - img6width;
+ 	  			    var newY6 = y6 - img6height/2;
+
+ 		   			divs[i].style.top = Math.round(newY6) + "px";
+		            divs[i].style.left = Math.round(newX6) + "px";
+	 			}
+	
+				//Image 7
+  				if(i==6){
+
+            		var img7width = imgs[0].width;
+   	 	         	var isInvalidWidth = validateWidth(img7width,x7);
+					if(isInvalidWidth){
+						console.log("Img 7 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	    	    var img7height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img7height,y7);
+					if(isInvalidHeight){
+						console.log("Img 7 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+
+ 					var newY7 = y7 - img7height;
+ 					var newX7 = x7 - img7width;
+ 
+  		  			divs[i].style.top = Math.round(newY7) + "px";
+	    	        divs[i].style.left = Math.round(newX7) + "px";
+ 				}
+
+				//Image 8
+   				if(i==7){
+        	    	var img8width = imgs[0].width;
+  	 	         	var isInvalidWidth = validateWidth(img8width,x8);
+					if(isInvalidWidth){
+						console.log("Img 8 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+		  	        var img8height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img8height,y8);
+					if(isInvalidHeight){
+						console.log("Img 8 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+
+ 					var newY8 = y8 - img8height;
+ 					var newX8 = x8 - img8width/2;
+ 	
+    				divs[i].style.top = Math.round(newY8) + "px";
+	        	    divs[i].style.left = Math.round(newX8) + "px";
+ 				}
+
+				//Image 9
+   				if(i==8){
+	  	        	var img9width = imgs[0].width;
+	  	        	
+	  	        	var isInvalidWidth = validateWidth(img9width,x9);
+					if(isInvalidWidth){
+						console.log("Img 9 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	        	var img9height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img9height,y9);
+					if(isInvalidHeight){
+						console.log("Img 9 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}
+	  	        	
+ 					var newY9 = y9 - img9height;   
+    				divs[i].style.top = Math.round(newY9) + "px";
+	            	divs[i].style.left = Math.round(x9) + "px";
+				}
+ 				
+ 				
+ 				//Image 10
+ 				if(i==9){
+ 					
+ 					var img10width = imgs[0].width;
+ 					var isInvalidWidth = validateWidth(img10width,x10);
+					if(isInvalidWidth){
+						console.log("Img 10 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	        	var img10height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img10height,y10);
+					if(isInvalidHeight){
+						console.log("Img 10 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}	
+ 					
+ 					var newY10 = y10 - img10height;
+    				divs[i].style.top = Math.round(newY10) + "px";
+	            	divs[i].style.left = Math.round(x10) + "px";
+				}
+ 				
+				//Image 11
+ 				if(i==10){
+ 					
+ 					var img11Width = imgs[0].width;
+ 					
+ 					var isInvalidWidth = validateWidth(img11Width,x11);
+					if(isInvalidWidth){
+						console.log("Img 11 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	        	var img11height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img11height,y11);
+					if(isInvalidHeight){
+						console.log("Img 11 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}	
+ 				
+ 					divs[i].style.top = Math.round(y11) + "px";
+	            	divs[i].style.left = Math.round(x11) + "px";
+ 				}
+ 				
+ 				//Image 12
+ 				if(i==11){
+ 					
+ 					var img12Width = imgs[0].width;
+ 					
+ 					var isInvalidWidth = validateWidth(img12Width,x12);
+					if(isInvalidWidth){
+						console.log("Img 12 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	        	var img12height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img12height,y12);
+					if(isInvalidHeight){
+						console.log("Img 12 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}	
+ 				
+ 					divs[i].style.top = Math.round(y12) + "px";
+	            	divs[i].style.left = Math.round(x12) + "px";
+ 				}
+
+				//Image 13
+ 				if(i==12){
+ 					
+ 					var img13Width = imgs[0].width;
+ 					
+ 					var isInvalidWidth = validateWidth(img13Width,x13);
+					if(isInvalidWidth){
+						console.log("Img 13 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	        	var img13height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img13height, y13);
+					if(isInvalidHeight){
+						console.log("Img 13 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}	
+ 				
+ 					divs[i].style.top = Math.round(y13) + "px";
+	            	divs[i].style.left = Math.round(x13) + "px";
+ 				}
+
+				//Image 14
+ 				if(i==13){
+ 					
+ 					var img14Width = imgs[0].width;
+ 					
+ 					var isInvalidWidth = validateWidth(img14Width,x14);
+					if(isInvalidWidth){
+						console.log("Img 14 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	        	var img14height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img14height,y14);
+					if(isInvalidHeight){
+						console.log("Img 14 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}	
+ 				
+ 					var newY14 = nextTopPos;   
+ 					var newX14 = nextLeftPos;		
+    				divs[i].style.top = Math.round(y14) + "px";
+	            	divs[i].style.left = Math.round(x14) + "px";
+ 				}
+ 				
+ 				//Image 15
+ 				if(i==14){
+ 					
+ 					var img15Width = imgs[0].width;
+ 					
+ 					var isInvalidWidth = validateWidth(img15Width,x15);
+					if(isInvalidWidth){
+						console.log("Img 15 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	        	var img15height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img15height,y15);
+					if(isInvalidHeight){
+						console.log("Img 15 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}	
+ 				
+					divs[i].style.top = Math.round(y15) + "px";
+	            	divs[i].style.left = Math.round(x15) + "px";
+ 				}
+ 				
+ 				//Image 16
+ 				if(i==15){
+ 					
+ 					var img16Width = imgs[0].width;
+ 					
+ 					var isInvalidWidth = validateWidth(img16Width,x16);
+					if(isInvalidWidth){
+						console.log("Img 16 Width is greater than the Maximum Width");
+						isTooBigImgs = true;
+						break;					
+					}
+
+	  	        	var img16height = imgs[0].height;
+					var isInvalidHeight = validateHeight(img16height,y16);
+					if(isInvalidHeight){
+						console.log("Img 16 Height is greater than the Maximum Height");
+						isTooBigImgs = true;
+						break;					
+					}	
+ 				
+ 					divs[i].style.top = Math.round(y16) + "px";
+	            	divs[i].style.left = Math.round(x16) + "px";
+ 				}
+ 				
+ 		  	} //End of For Loop
+ 		  	
+ 		  	 //Check the Boolean to verify if it was set to TRUE during the FOR loop processing
+			if (isTooBigImgs) {
+          	
+          		//If it was set to TRUE, then iterate through the images and reduce the size of the images
+				for (var i = 0; i < divs.length; i++) {
+					var imgs = divs[i].getElementsByTagName("img");
+					var height = imgs[0].height;
+					var width = imgs[0].width;
+					imgs[0].setAttribute("width", width * 0.95);
+					imgs[0].setAttribute("height", height * 0.95);
+            	}
+          	}
+		} //End of While Loop
+      	/*** END *****/
+      }
+	  
+	  function validateWidth(width, leftPos){
+	 	
+	 	var widthCalculator = width + leftPos;
+	 	//alert("widthCalculator: " + widthCalculator);
+	 	//alert("maxWidth: " + maxWidth);
+ 	 	if(widthCalculator > maxWidth){
+ 	 		//alert("Combined Width is greater than the Maximum Width");
+ 	 		return true;
+ 	 	}else{
+ 	 		return false;
+ 	 	}
+	 }
+	
+	
+	 function validateHeight(height, topPos){
+	 	var heightCalculator = height + topPos - 100;
+	 	//alert("heightCalculator: " + heightCalculator);
+	 	//alert("maxHeight: " + maxHeight);
+	 	
+	 	if(heightCalculator > maxHeight){
+ 	 		//alert("Combined Height is greater than the Maximum Height");
+ 	 		return true;
+ 	 	}else{
+ 	 		return false;
+ 	 	}
+	 }	  
+	 /***** Advanced Drawer - END *****/
+	
+	/***** Personal Drawer - START ****/ 
+	function PersonalDrawer() {}
+	PersonalDrawer.prototype.resizeImages = function(id, which) {
+	  console.log("Inside Resize Images of Personal Drawer");
+      for (var i = 0; i < divs.length; i++) {
+          var imgs = divs[i].getElementsByTagName("img");
+          var height = imgs[0].height;
+          var width = imgs[0].width;
+
+          if (divs[i].id == id) {
+            if (which == 1) {
+              imgs[0].setAttribute("width", maxWidth);
+              imgs[0].setAttribute("height", maxHeight);
+            } else {
+              imgs[0].setAttribute("width", width * 0.9);
+              imgs[0].setAttribute("height", height * 0.9);
+            }
+          }
+        }
+    }
+    
+    PersonalDrawer.prototype.placeImages = function() {
+		/*** START ****/
+        console.log("Inside Place Images of Personal Drawer");
+        divs.sort(sortImgBySize); // Sort the images by Size
+
+        var topPos = 100;
+        var leftPos = 0;
+        var imgX = 0;
+        var imgY = 0;
+          
+        var oddX = 0;
+        var oddY = 100;
+          
+        var evenX = maxWidth/4;
+        var evenY = 100;
+          
+        var imgWidth = maxWidth/4;
+        var imgHeight = maxHeight/4; 
+          
+        var gridImgHeight = maxHeight/4;
+        var gridImgWidth = maxWidth/4;
+          
+        for (var i = 0; i < divs.length; i++) {
+          
+            var imgs = divs[i].getElementsByTagName("img");
+           	var height = imgs[0].height;
+			var width = imgs[0].width;
+            
+            //alert("Img Size: Height = " + height + " and Width: " + width);
+            
+            //Place largest image at position 512,0 of size 512,768
+            if(i==0){
+            	
+            	var imgWidth = maxWidth/2;
+            	var imgHeight = maxHeight;
+       			var imgX = maxWidth/2;
+       			var imgY = 100;
+	       	
+	       	    imgs[0].setAttribute("width", maxWidth/2);
+				imgs[0].setAttribute("height", maxHeight);
+				
+            	divs[i].style.top = Math.round(imgY) + "px";
+	           	divs[i].style.left = Math.round(imgX) + "px";
+            	
+            }else{
+            	
+            	imgs[0].setAttribute("width", maxWidth/4);
+				imgs[0].setAttribute("height", maxHeight/4);
+            	
+            	if(i%2 != 0){ 
+      		       	
+    		       	divs[i].style.top = Math.round(oddY) + "px";
+	           		divs[i].style.left = Math.round(oddX) + "px";
+      		       	
+          			oddY = oddY + maxHeight/4;
+            	}
+            	
+            	if(i%2 == 0){
+ 
+       		       	divs[i].style.top = Math.round(evenY) + "px";
+	           		divs[i].style.left = Math.round(evenX) + "px";
+       		       	
+          			evenY = evenY + maxHeight/4;
+	          	}
+            }
+		}
+ 		/**** END ***/
+    }
+	/****** Personal Drawer - END ****/
+
+      function redraw(id, which) {
+        drawer.resizeImages(id, which);
+        drawer.placeImages();
+      }
+	
+      function changeState(id) {
+        if (id == "basicBtn") {
+          drawer = basicDrawer;
+        } else if (id == "advancedBtn") {
+          drawer = advancedDrawer;
+        } else if (id == "personalBtn") {
+          drawer = personalDrawer;
+        }
+        drawer.placeImages();
+      }
+
+      function createDivForEachImage() {
+        var imgName=["EPI", "AFI", "ACP", "CC", "CP", "DP", "EJ", "HFDP", "IA"]; 
+        var imgWidth=[268, 266, 284, 302, 297, 321, 318, 346, 356];
+ 
+        var topPos = 100;
+        var leftPos = 0;
+
+        for (var i = 0; i < imgName.length; i++) {
+          var div =  document.createElement("div");
+          div.id=imgName[i];
+          div.onmousedown= function() { increaseCount(this.id, arguments[0] || event); };
+          div.innerHTML="<img src=\"img/" + imgName[i] + ".png\">";
+          div.style.position ="absolute";
+
+          if ((leftPos + imgWidth[i]) > maxWidth) {
+            topPos += 400;
+            leftPos = 0;
+          }
+
+          div.style.left = leftPos + "px";
+          div.style.top = topPos + "px";
+          leftPos += imgWidth[i];
+
+          var imgs = div.getElementsByTagName("img");
+          imgs[0].setAttribute("width", imgWidth[i]);
+          imgs[0].setAttribute("height", 400);
+
+          divs[i] = div; 
+          document.body.appendChild(div);
+        }
+        drawer.placeImages();
+      }
+
+    </script>
+    <div id="basicBtn" style="position: absolute; left: 0px; top: 0px" onmousedown="changeState(this.id)">
+      <img src="btn/basic.png"/>
+    </div>
+    <div id="advancedBtn" style="position: absolute; left: 100px; top: 0px" onmousedown="changeState(this.id)">
+      <img src="btn/advanced.png"/>
+    </div>
+    <div id="personalBtn" style="position: absolute; left: 200px; top: 0px" onmousedown="changeState(this.id)">
+      <img src="btn/personal.png"/>
+    </div>
+  </body>
+</html>
